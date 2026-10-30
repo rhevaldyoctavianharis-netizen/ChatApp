@@ -26,12 +26,14 @@ SELECT m.id, m.chat_id, m.sender_id, m.type,
   COALESCE((SELECT json_agg(json_build_object('user_id', x.user_id, 'emoji', x.emoji))
             FROM message_reactions x WHERE x.message_id = m.id), '[]'::json) AS reactions
 FROM messages m
+JOIN chats c ON c.id = m.chat_id
 LEFT JOIN media md ON md.id = m.media_id
 LEFT JOIN messages rm ON rm.id = m.reply_to
 `;
 
 async function getMessage(id, viewerId) {
-  const { rows } = await query(`${SELECT} WHERE m.id = $2`, [viewerId, id]);
+  const { rows } = await query(`${SELECT} WHERE m.id = $2
+    AND (c.message_ttl_seconds = 0 OR m.created_at + (c.message_ttl_seconds || ' seconds')::interval > now())`, [viewerId, id]);
   if (!rows[0]) throw new HttpError(404, 'Pesan tidak ditemukan');
   return rows[0];
 }
@@ -40,6 +42,7 @@ async function listMessages(chatId, viewerId, { beforeId, limit }) {
   const { rows } = await query(
     `${SELECT}
      WHERE m.chat_id = $2
+       AND (c.message_ttl_seconds = 0 OR m.created_at + (c.message_ttl_seconds || ' seconds')::interval > now())
        AND ($3::uuid IS NULL OR m.created_at < (SELECT created_at FROM messages WHERE id = $3::uuid))
      ORDER BY m.created_at DESC LIMIT $4`,
     [viewerId, chatId, beforeId || null, limit]
@@ -81,19 +84,38 @@ async function emitStatuses(io, rows) {
   }
 }
 
-async function sendMessage(io, { chatId, senderId, body, mediaId, replyTo, clientId }) {
+async function sendMessage(io, { chatId, senderId, body, mediaId, replyTo, clientId, type: requestedType }) {
   await requireMember(chatId, senderId);
 
   body = typeof body === 'string' ? body.trim() : '';
   if (body.length > 4096) throw new HttpError(400, 'Pesan terlalu panjang (maks 4096 karakter)');
 
-  let type = 'text';
+  let type = requestedType || 'text';
+  if (!['text', 'poll', 'location', 'contact'].includes(type)) type = 'text';
   if (mediaId) {
     const { rows } = await query('SELECT mime, owner_id FROM media WHERE id = $1', [mediaId]);
     if (!rows[0] || rows[0].owner_id !== senderId) throw new HttpError(400, 'Media tidak ditemukan');
     type = typeFromMime(rows[0].mime);
   } else if (!body) {
     throw new HttpError(400, 'Isi pesan tidak boleh kosong');
+  }
+  if (type !== 'text' && type !== 'poll' && type !== 'location' && type !== 'contact') {
+    throw new HttpError(400, 'Tipe pesan tidak didukung');
+  }
+  if (type !== 'text') {
+    try {
+      const payload = JSON.parse(body);
+      if (!payload || typeof payload !== 'object') throw new Error('invalid');
+      if (type === 'poll' && (!String(payload.question || '').trim() || !Array.isArray(payload.options) || payload.options.length < 2)) {
+        throw new Error('invalid');
+      }
+      if (type === 'location' && (!Number.isFinite(Number(payload.latitude)) || !Number.isFinite(Number(payload.longitude)))) {
+        throw new Error('invalid');
+      }
+      if (type === 'contact' && !String(payload.name || '').trim()) throw new Error('invalid');
+    } catch {
+      throw new HttpError(400, `Payload ${type} tidak valid`);
+    }
   }
 
   if (replyTo) {
@@ -151,7 +173,7 @@ async function sendMessage(io, { chatId, senderId, body, mediaId, replyTo, clien
       );
       const u = await query('SELECT display_name FROM users WHERE id = $1', [senderId]);
       const preview = type === 'text' ? body.slice(0, 100)
-        : { image: '📷 Foto', video: '🎥 Video', audio: '🎤 Audio', file: '📎 Dokumen' }[type];
+        : { image: 'Foto', video: 'Video', audio: 'Pesan suara', file: 'Dokumen', poll: 'Polling', location: 'Lokasi', contact: 'Kontak' }[type];
       await pushToUsers(m.rows.map((r) => r.user_id), {
         title: u.rows[0]?.display_name || 'Pesan baru',
         body: preview,

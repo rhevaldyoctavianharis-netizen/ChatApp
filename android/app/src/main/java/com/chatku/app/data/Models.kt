@@ -35,6 +35,7 @@ data class Chat(
     val type: String,
     val name: String? = null,
     val description: String? = null,
+    @SerialName("message_ttl_seconds") val messageTtlSeconds: Int = 0,
     val role: String? = null,
     val muted: Boolean = false,
     val unread: Int = 0,
@@ -185,7 +186,11 @@ data class GroupBody(
 )
 
 @Serializable
-data class UpdateChatBody(val name: String? = null, val description: String? = null)
+data class UpdateChatBody(
+    val name: String? = null,
+    val description: String? = null,
+    @SerialName("message_ttl_seconds") val messageTtlSeconds: Int? = null,
+)
 
 @Serializable
 data class MuteBody(val muted: Boolean)
@@ -196,6 +201,7 @@ data class AddMembersBody(@SerialName("user_ids") val userIds: List<String>)
 @Serializable
 data class SendBody(
     val body: String? = null,
+    val type: String? = null,
     @SerialName("media_id") val mediaId: String? = null,
     @SerialName("reply_to") val replyTo: String? = null,
     @SerialName("client_id") val clientId: String? = null,

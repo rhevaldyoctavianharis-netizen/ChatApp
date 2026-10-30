@@ -97,9 +97,14 @@ router.patch('/:id', wrap(async (req, res) => {
   if (me.role !== 'admin') throw new HttpError(403, 'Hanya admin');
   const name = req.body.name !== undefined ? String(req.body.name).trim() : null;
   if (name !== null && (!name || name.length > 60)) throw new HttpError(400, 'Nama grup 1-60 karakter');
+  const ttl = req.body.message_ttl_seconds === undefined ? null : Number(req.body.message_ttl_seconds);
+  if (ttl !== null && ![0, 86400, 604800, 7776000].includes(ttl)) {
+    throw new HttpError(400, 'Durasi pesan sementara tidak valid');
+  }
   await query(
-    'UPDATE chats SET name = COALESCE($2, name), description = COALESCE($3, description) WHERE id = $1',
-    [req.params.id, name, req.body.description !== undefined ? String(req.body.description).slice(0, 500) : null]);
+    `UPDATE chats SET name = COALESCE($2, name), description = COALESCE($3, description),
+      message_ttl_seconds = COALESCE($4, message_ttl_seconds) WHERE id = $1`,
+    [req.params.id, name, req.body.description !== undefined ? String(req.body.description).slice(0, 500) : null, ttl]);
   const io = req.app.get('io');
   io.to(`chat:${req.params.id}`).emit('chat:updated', { chat_id: req.params.id });
   res.json(await getChat(req.params.id, req.userId));
@@ -172,6 +177,7 @@ router.post('/:id/messages', wrap(async (req, res) => {
     chatId: req.params.id,
     senderId: req.userId,
     body: req.body.body,
+    type: req.body.type,
     mediaId: req.body.media_id,
     replyTo: req.body.reply_to,
     clientId: req.body.client_id,

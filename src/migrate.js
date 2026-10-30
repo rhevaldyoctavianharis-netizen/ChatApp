@@ -35,8 +35,10 @@ CREATE TABLE IF NOT EXISTS chats (
   description TEXT,
   direct_key TEXT UNIQUE,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  message_ttl_seconds INTEGER NOT NULL DEFAULT 0 CHECK (message_ttl_seconds IN (0, 86400, 604800, 7776000)),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS message_ttl_seconds INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS chat_members (
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
@@ -53,7 +55,7 @@ CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text','image','video','audio','file')),
+  type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text','image','video','audio','file','poll','location','contact')),
   body TEXT,
   media_id UUID REFERENCES media(id) ON DELETE SET NULL,
   reply_to UUID REFERENCES messages(id) ON DELETE SET NULL,
@@ -62,6 +64,11 @@ CREATE TABLE IF NOT EXISTS messages (
   deleted_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_messages_chat_time ON messages(chat_id, created_at DESC);
+DO $$ BEGIN
+  ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_type_check;
+  ALTER TABLE messages ADD CONSTRAINT messages_type_check
+    CHECK (type IN ('text','image','video','audio','file','poll','location','contact'));
+END $$;
 
 CREATE TABLE IF NOT EXISTS message_receipts (
   message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,

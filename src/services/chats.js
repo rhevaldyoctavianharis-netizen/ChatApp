@@ -13,7 +13,7 @@ async function getMemberIds(chatId) {
 }
 
 const CHAT_SELECT = `
-SELECT c.id, c.type, c.name, c.description, c.created_at, cm.role, cm.muted,
+SELECT c.id, c.type, c.name, c.description, c.message_ttl_seconds, c.created_at, cm.role, cm.muted,
   (SELECT COUNT(*) FROM message_receipts r JOIN messages m ON m.id = r.message_id
      WHERE m.chat_id = c.id AND r.user_id = $1 AND r.read_at IS NULL AND m.deleted_at IS NULL)::int AS unread,
   CASE WHEN c.type = 'direct' THEN (
@@ -25,7 +25,9 @@ SELECT c.id, c.type, c.name, c.description, c.created_at, cm.role, cm.muted,
      SELECT m.id, m.sender_id, m.type,
             CASE WHEN m.deleted_at IS NULL THEN left(m.body, 200) END AS body,
             (m.deleted_at IS NOT NULL) AS deleted, m.created_at
-     FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) lm) AS last_message,
+     FROM messages m WHERE m.chat_id = c.id
+       AND (c.message_ttl_seconds = 0 OR m.created_at + (c.message_ttl_seconds || ' seconds')::interval > now())
+       ORDER BY m.created_at DESC LIMIT 1) lm) AS last_message,
   COALESCE((SELECT MAX(created_at) FROM messages WHERE chat_id = c.id), c.created_at) AS last_activity
 FROM chats c
 JOIN chat_members cm ON cm.chat_id = c.id AND cm.user_id = $1

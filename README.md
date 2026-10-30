@@ -597,3 +597,10 @@ Sediakan `DEVICE_HASH_SECRET` yang acak dan panjang. Badge premium dikelola
 melalui endpoint admin dan disimpan sebagai identifier seperti `verified`,
 `programmer`, `creator`, atau `gamer`. Rotasi key dan pembatasan akses dashboard
 tetap wajib dilakukan di deployment production.
+
+Pesan dasar tambahan tersedia melalui REST dan Socket.IO: `poll`, `location`,
+dan `contact`. Payload dikirim sebagai JSON pada field `body`, contohnya
+`{"question":"Pilihan?","options":["A","B"]}`, `{"latitude":-6.2,"longitude":106.8}`,
+atau `{"name":"Dina","phone":"+628..."}`. Admin grup dapat mengatur
+`message_ttl_seconds` ke `0`, `86400`, `604800`, atau `7776000` melalui
+`PATCH /api/chats/:id`; nilai selain itu ditolak server.
