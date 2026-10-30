@@ -34,13 +34,14 @@ Wrapper `gradle-wrapper.properties` sudah ada; Android Studio mengunduh Gradle 8
 **Command line:** instal Gradle 8.9 lalu jalankan sekali `gradle wrapper`, kemudian:
 ```
 ./gradlew assembleDebug      # APK: app/build/outputs/apk/debug/app-debug.apk
-./gradlew assembleRelease    # APK release (ditandatangani debug key, untuk uji coba)
+./gradlew assembleRelease    # APK release unsigned; gunakan keystore privat untuk distribusi
 ./gradlew test               # unit test
 ```
 **GitHub Actions:** `.github/workflows/android.yml` (di root repo) membangun APK debug dan mengunggahnya sebagai artifact.
 Set variabel repo `BASE_URL` agar URL ikut tertanam.
 
-Untuk rilis Play Store: buat keystore Anda sendiri dan ganti `signingConfig` di `app/build.gradle.kts`.
+Untuk rilis Play Store, tandatangani APK/AAB dengan keystore privat di luar repository dan simpan kredensialnya
+di secret CI. Build release tidak lagi memakai debug key.
 
 ## Struktur
 ```

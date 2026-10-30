@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.InsertDriveFile
@@ -96,6 +97,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -373,6 +376,9 @@ fun ChatScreen(chatId: String, onBack: () -> Unit, onGroupInfo: () -> Unit) {
                             }
                         } else {
                             Row(verticalAlignment = Alignment.Bottom) {
+                                IconButton(onClick = { text += "🙂" }) {
+                                    Icon(Icons.Filled.EmojiEmotions, "Emoji", tint = wa.secondary)
+                                }
                                 TextField(
                                     value = text, onValueChange = { text = it }, maxLines = 5,
                                     placeholder = { Text("Ketik pesan") },
@@ -425,7 +431,18 @@ fun ChatScreen(chatId: String, onBack: () -> Unit, onGroupInfo: () -> Unit) {
             }
         },
     ) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize().background(wa.wallpaper)) {
+        Box(
+            Modifier.padding(pad).fillMaxSize().background(wa.wallpaper).drawBehind {
+                val mark = wa.secondary.copy(alpha = if (wa.wallpaper.luminance() > 0.5f) 0.035f else 0.06f)
+                val step = 72.dp.toPx()
+                for (y in -step.toInt()..size.height.toInt() step step.toInt()) {
+                    for (x in -step.toInt()..size.width.toInt() step step.toInt()) {
+                        drawCircle(mark, radius = 2.5.dp.toPx(), center = Offset(x + step * 0.3f, y + step * 0.2f))
+                        drawCircle(mark, radius = 1.5.dp.toPx(), center = Offset(x + step * 0.75f, y + step * 0.7f))
+                    }
+                }
+            },
+        ) {
             if (msgs.isEmpty()) {
                 Text("Belum ada pesan. Sapa dulu 👋", Modifier.align(Alignment.Center), color = wa.secondary)
             }

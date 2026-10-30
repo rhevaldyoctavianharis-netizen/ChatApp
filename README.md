@@ -2,12 +2,12 @@
 
 Backend chat **real-time ala WhatsApp** — **Node.js 20 · Express · Socket.IO · PostgreSQL** — siap deploy ke Heroku dalam satu klik.
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/USERNAME/chat-backend)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp)
 
 ![Node](https://img.shields.io/badge/node-20.x-339933?logo=node.js&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-> ⚠️ **Sebelum upload ke GitHub:** ganti semua `USERNAME` (di README ini dan `app.json`) dengan username GitHub Anda, dan `NAMA_ANDA` di `LICENSE`.
+Repository resmi: https://github.com/rhevaldyoctavianharis-netizen/ChatApp
 
 ## Daftar isi
 - [Fitur](#fitur)
@@ -34,10 +34,10 @@ Backend chat **real-time ala WhatsApp** — **Node.js 20 · Express · Socket.IO
 
 ## Deploy ke Heroku (1 klik)
 
-1. Upload repo ini ke GitHub **publik** (setelah mengganti `USERNAME`, lihat catatan di atas).
+1. Gunakan repository ini di GitHub.
 2. Klik tombol di bawah, isi nama app, lalu **Deploy app**:
 
-   [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/USERNAME/chat-backend)
+   [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp)
 
 Yang dilakukan Heroku secara otomatis berdasarkan [`app.json`](app.json) dan [`Procfile`](Procfile):
 
@@ -45,7 +45,7 @@ Yang dilakukan Heroku secara otomatis berdasarkan [`app.json`](app.json) dan [`P
 |---|---|
 | Buildpack & stack | `heroku/nodejs`, `heroku-24` (Node 20 dari `package.json`) |
 | Add-on | Heroku Postgres `essential-0` → `DATABASE_URL` terisi otomatis |
-| Config vars | `JWT_SECRET` dibuat acak, `NODE_ENV=production`, `CORS_ORIGIN=*`, `MAX_MEDIA_MB=16` |
+| Config vars | `JWT_SECRET` dibuat acak, `NODE_ENV=production`, `CORS_ORIGIN` perlu dibatasi, `MAX_MEDIA_MB=16` |
 | Release phase | `node src/migrate.js` membuat semua tabel (idempoten) |
 | Dyno | 1 × `web` ukuran `basic` (`node src/server.js`) |
 
@@ -57,7 +57,7 @@ heroku login
 heroku create nama-app-chat-anda
 heroku addons:create heroku-postgresql:essential-0
 heroku config:set JWT_SECRET=$(openssl rand -hex 32)
-heroku config:set CORS_ORIGIN="*"          # atau domain aplikasi web Anda
+heroku config:set CORS_ORIGIN="https://domain-web-anda.example"
 git push heroku HEAD:main
 heroku logs --tail
 ```
@@ -132,7 +132,7 @@ curl localhost:3000/api/info
 |---|---|---|---|
 | `DATABASE_URL` | ya | `postgres://chat:chat@localhost:5432/chatapp` | Disediakan Heroku Postgres |
 | `JWT_SECRET` | ya (production) | – | String acak panjang; server menolak start tanpa ini di production |
-| `CORS_ORIGIN` | tidak | `*` | `*` atau daftar origin dipisah koma |
+| `CORS_ORIGIN` | tidak | `*` | Daftar origin web yang dipercaya, dipisah koma; batasi pada production |
 | `MAX_MEDIA_MB` | tidak | `16` | Batas ukuran upload |
 | `REDIS_URL` | tidak | – | Wajib bila dyno web > 1 |
 | `PORT` | tidak | `3000` | Diisi otomatis oleh Heroku |

@@ -20,12 +20,28 @@ router.post('/', auth, upload.single('file'), wrap(async (req, res) => {
 
 // Unduh/tampilkan media. Boleh pakai ?token=JWT agar bisa dipakai di <img src>.
 router.get('/:id', auth, wrap(async (req, res) => {
-  const { rows } = await query('SELECT mime, filename, data FROM media WHERE id = $1', [req.params.id]);
+  const { rows } = await query(
+    `SELECT m.mime, m.filename, m.data
+     FROM media m
+     WHERE m.id = $1
+       AND (
+         m.owner_id = $2
+         OR EXISTS (SELECT 1 FROM users u WHERE u.avatar_media_id = m.id)
+         OR EXISTS (
+           SELECT 1
+           FROM messages msg
+           JOIN chat_members cm ON cm.chat_id = msg.chat_id
+           WHERE msg.media_id = m.id AND cm.user_id = $2
+         )
+       )`,
+    [req.params.id, req.userId]
+  );
   if (!rows[0]) throw new HttpError(404, 'Media tidak ditemukan');
   res.set({
     'Content-Type': rows[0].mime,
     'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(rows[0].filename || 'file')}`,
     'Cache-Control': 'private, max-age=31536000, immutable',
+    'X-Content-Type-Options': 'nosniff',
   });
   res.send(rows[0].data);
 }));

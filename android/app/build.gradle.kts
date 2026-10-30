@@ -30,9 +30,6 @@ android {
             isMinifyEnabled = false
             manifestPlaceholders["usesCleartext"] = "false"
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Ditandatangani dengan debug key agar APK release bisa langsung di-install untuk uji coba.
-            // Untuk Play Store, ganti dengan keystore Anda sendiri.
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
 

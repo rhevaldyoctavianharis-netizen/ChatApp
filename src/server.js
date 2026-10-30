@@ -81,7 +81,13 @@ async function main() {
     const { createClient } = require('redis');
     const pub = createClient({
       url: config.redisUrl,
-      socket: config.redisUrl.startsWith('rediss://') ? { tls: true, rejectUnauthorized: false } : undefined,
+      socket: config.redisUrl.startsWith('rediss://')
+        ? {
+            tls: true,
+            rejectUnauthorized: true,
+            ...(process.env.REDIS_TLS_CA ? { ca: process.env.REDIS_TLS_CA } : {}),
+          }
+        : undefined,
     });
     const sub = pub.duplicate();
     pub.on('error', (e) => console.error('[redis]', e.message));
