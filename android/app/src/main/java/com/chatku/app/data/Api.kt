@@ -15,6 +15,9 @@ import retrofit2.http.Query
 interface Api {
     @POST("api/auth/register") suspend fun register(@Body b: RegisterBody): AuthResponse
     @POST("api/auth/login") suspend fun login(@Body b: LoginBody): AuthResponse
+    @POST("api/auth/request-otp") suspend fun requestOtp(@Body b: OtpRequestBody): OkResponse
+    @POST("api/auth/verify-otp") suspend fun verifyOtp(@Body b: OtpVerifyBody): AuthResponse
+    @POST("api/auth/anonymous") suspend fun anonymous(@Body b: AnonymousBody): AuthResponse
 
     @GET("api/me") suspend fun me(): User
     @PATCH("api/me") suspend fun updateMe(@Body b: UpdateMeBody): User

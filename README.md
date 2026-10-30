@@ -578,3 +578,22 @@ ChatApp/
 ## Lisensi
 
 Proyek ini menggunakan [MIT License](LICENSE).
+
+## OTP, anonim, premium, dan admin
+
+OTP email memakai Brevo dan hanya diproses backend. Isi `BREVO_API_KEY`,
+`BREVO_SENDER_EMAIL`, dan `BREVO_SENDER_NAME`; jangan pernah memasukkan API key
+ke APK. Endpoint yang tersedia adalah `POST /api/auth/request-otp` dan
+`POST /api/auth/verify-otp`.
+
+Login anonim membutuhkan header `X-Device-Id` dari aplikasi dan hanya dapat
+digunakan sekali untuk setiap device hash. Identitas perangkat dapat dipalsukan
+pada perangkat rooted atau client modifikasi, sehingga fitur ini bukan pengganti
+attestation seperti Play Integrity.
+
+Untuk menjadikan akun sebagai admin saat migrasi, set `ADMIN_EMAIL` ke email
+akun tersebut. Dashboard dan REST admin memerlukan `ADMIN_DASHBOARD_KEY`.
+Sediakan `DEVICE_HASH_SECRET` yang acak dan panjang. Badge premium dikelola
+melalui endpoint admin dan disimpan sebagai identifier seperti `verified`,
+`programmer`, `creator`, atau `gamer`. Rotasi key dan pembatasan akses dashboard
+tetap wajib dilakukan di deployment production.

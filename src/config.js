@@ -14,4 +14,10 @@ module.exports = {
   corsOrigin: rawOrigin === '*' ? true : rawOrigin.split(',').map((s) => s.trim()),
   maxMediaMb: Number(process.env.MAX_MEDIA_MB || 16),
   redisUrl: process.env.REDIS_URL || null,
+  brevoApiKey: process.env.BREVO_API_KEY || null,
+  brevoSenderEmail: process.env.BREVO_SENDER_EMAIL || null,
+  brevoSenderName: process.env.BREVO_SENDER_NAME || 'ChatKu',
+  adminKey: process.env.ADMIN_DASHBOARD_KEY || null,
+  deviceHashSecret: process.env.DEVICE_HASH_SECRET || process.env.JWT_SECRET,
+  adminEmail: process.env.ADMIN_EMAIL || null,
 };

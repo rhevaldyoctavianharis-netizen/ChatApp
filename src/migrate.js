@@ -11,6 +11,12 @@ CREATE TABLE IF NOT EXISTS users (
   last_seen TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS badges JSONB NOT NULL DEFAULT '[]'::jsonb;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,6 +130,37 @@ CREATE TABLE IF NOT EXISTS status_views (
   viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (status_id, viewer_id)
 );
+
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  purpose TEXT NOT NULL CHECK (purpose IN ('login','register')),
+  device_hash TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_otp_email_active ON otp_codes(email, expires_at);
+
+CREATE TABLE IF NOT EXISTS anonymous_devices (
+  device_hash TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ip_hash TEXT,
+  user_agent TEXT,
+  device_info JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 async function migrate() {
@@ -132,6 +169,16 @@ async function migrate() {
     await client.query('SELECT pg_advisory_lock(727274)');
     await client.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
     await client.query(SCHEMA);
+    if (process.env.ADMIN_EMAIL) {
+      await client.query(
+        `UPDATE users SET badges = CASE
+           WHEN badges @> '["admin"]'::jsonb THEN badges
+           ELSE badges || '["admin"]'::jsonb
+         END
+         WHERE lower(email) = lower($1)`,
+        [process.env.ADMIN_EMAIL],
+      );
+    }
     console.log('[migrate] skema database siap');
   } finally {
     await client.query('SELECT pg_advisory_unlock(727274)').catch(() => {});

@@ -156,6 +156,15 @@ data class RegisterBody(
 data class LoginBody(val phone: String, val password: String)
 
 @Serializable
+data class OtpRequestBody(val email: String, val purpose: String = "login")
+
+@Serializable
+data class OtpVerifyBody(val email: String, val code: String, @SerialName("display_name") val displayName: String = "")
+
+@Serializable
+data class AnonymousBody(@SerialName("device_info") val deviceInfo: Map<String, String>)
+
+@Serializable
 data class UpdateMeBody(
     @SerialName("display_name") val displayName: String? = null,
     val about: String? = null,

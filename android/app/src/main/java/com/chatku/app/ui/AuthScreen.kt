@@ -1,5 +1,7 @@
 package com.chatku.app.ui
 
+import android.os.Build
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,8 +32,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.chatku.app.BuildConfig
+import com.chatku.app.data.AnonymousBody
 import com.chatku.app.data.LoginBody
 import com.chatku.app.data.Net
+import com.chatku.app.data.OtpRequestBody
+import com.chatku.app.data.OtpVerifyBody
 import com.chatku.app.data.RegisterBody
 import com.chatku.app.data.Session
 import com.chatku.app.data.safe
@@ -49,6 +55,10 @@ fun AuthScreen() {
     var showServer by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var otpMode by remember { mutableStateOf(false) }
+    var otpSent by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf("") }
+    var otp by remember { mutableStateOf("") }
     val wa = LocalWa.current
 
     fun submit() {
@@ -64,11 +74,30 @@ fun AuthScreen() {
                 Session.baseUrl = url
                 Net.configure(url)
             }
+
             val r = safe {
                 if (register) Net.api.register(RegisterBody(p, name.trim(), password))
                 else Net.api.login(LoginBody(p, password))
             }
             r.onSuccess { Session.save(it.token, it.user) }.onFailure { error = it.message }
+            loading = false
+        }
+    }
+
+    fun anonymous() {
+        scope.launch {
+            loading = true
+            safe {
+                Net.api.anonymous(
+                    AnonymousBody(
+                        mapOf(
+                            "manufacturer" to Build.MANUFACTURER,
+                            "model" to Build.MODEL,
+                            "sdk" to Build.VERSION.SDK_INT.toString(),
+                        ),
+                    ),
+                )
+            }.onSuccess { Session.save(it.token, it.user) }.onFailure { error = it.message }
             loading = false
         }
     }
@@ -116,8 +145,29 @@ fun AuthScreen() {
         TextButton(onClick = { register = !register; error = null }) {
             Text(if (register) "Sudah punya akun? Masuk" else "Belum punya akun? Daftar")
         }
-        TextButton(onClick = { showServer = !showServer }) { Text("Pengaturan server") }
-        if (showServer) {
+        TextButton(onClick = { otpMode = !otpMode; error = null }) { Text("Masuk dengan OTP email") }
+        if (otpMode) {
+            OutlinedTextField(email, { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            if (otpSent) {
+                OutlinedTextField(otp, { otp = it.take(6) }, label = { Text("Kode OTP") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            }
+            TextButton(onClick = {
+                scope.launch {
+                    if (!otpSent) {
+                        safe { Net.api.requestOtp(OtpRequestBody(email)) }
+                            .onSuccess { otpSent = true }
+                            .onFailure { error = it.message }
+                    } else {
+                        safe { Net.api.verifyOtp(OtpVerifyBody(email, otp, name)) }
+                            .onSuccess { Session.save(it.token, it.user) }
+                            .onFailure { error = it.message }
+                    }
+                }
+            }) { Text(if (otpSent) "Verifikasi OTP" else "Kirim OTP") }
+        }
+        TextButton(onClick = { anonymous() }, enabled = !loading) { Text("Masuk sebagai anonim (1 perangkat)") }
+        if (BuildConfig.DEBUG) TextButton(onClick = { showServer = !showServer }) { Text("Pengaturan server") }
+        if (BuildConfig.DEBUG && showServer) {
             OutlinedTextField(
                 value = server, onValueChange = { server = it }, label = { Text("URL server (Cloudflare)") },
                 placeholder = { Text("https://chat.domainanda.com") }, singleLine = true,
