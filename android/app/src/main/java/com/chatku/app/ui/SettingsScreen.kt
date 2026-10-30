@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.chatku.app.ui
 
 import androidx.compose.foundation.layout.*
@@ -31,7 +33,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             Text("Warna aksen", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf(0xFF25D366, 0xFF6750A4, 0xFF007AFF, 0xFFFF6B6B).forEach { color ->
-                    Button(onClick = { Appearance.setAccent(color) }, colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color(color))) { Text(" ") }
+                    Button(onClick = { Appearance.setAccent(color.toInt()) }, colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color(color))) { Text(" ") }
                 }
             }
         }
