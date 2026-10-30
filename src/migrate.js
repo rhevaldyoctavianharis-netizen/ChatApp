@@ -86,6 +86,7 @@ async function migrate() {
   const client = await pool.connect();
   try {
     await client.query('SELECT pg_advisory_lock(727274)');
+    await client.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
     await client.query(SCHEMA);
     console.log('[migrate] skema database siap');
   } finally {
