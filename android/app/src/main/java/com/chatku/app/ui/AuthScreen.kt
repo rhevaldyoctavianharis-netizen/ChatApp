@@ -32,7 +32,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.chatku.app.BuildConfig
 import com.chatku.app.data.AnonymousBody
 import com.chatku.app.data.LoginBody
 import com.chatku.app.data.Net
@@ -51,8 +50,6 @@ fun AuthScreen() {
     var phone by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var server by remember { mutableStateOf(Session.baseUrl) }
-    var showServer by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var otpMode by remember { mutableStateOf(false) }
@@ -69,12 +66,6 @@ fun AuthScreen() {
             if (register && name.isBlank()) { error = "Nama wajib diisi"; return@launch }
             if (password.length < 6) { error = "Password minimal 6 karakter"; return@launch }
             loading = true
-            val url = Net.normalizeBaseUrl(server)
-            if (url.isNotEmpty() && url != Net.baseUrl) {
-                Session.baseUrl = url
-                Net.configure(url)
-            }
-
             val r = safe {
                 if (register) Net.api.register(RegisterBody(p, name.trim(), password))
                 else Net.api.login(LoginBody(p, password))
@@ -166,14 +157,5 @@ fun AuthScreen() {
             }) { Text(if (otpSent) "Verifikasi OTP" else "Kirim OTP") }
         }
         TextButton(onClick = { anonymous() }, enabled = !loading) { Text("Masuk sebagai anonim (1 perangkat)") }
-        if (BuildConfig.DEBUG) TextButton(onClick = { showServer = !showServer }) { Text("Pengaturan server") }
-        if (BuildConfig.DEBUG && showServer) {
-            OutlinedTextField(
-                value = server, onValueChange = { server = it }, label = { Text("URL server (Cloudflare)") },
-                placeholder = { Text("https://chat.domainanda.com") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }

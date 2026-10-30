@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.chatku.app.ServiceLocator
 import com.chatku.app.data.Net
 import com.chatku.app.data.PublicGroup
 import com.chatku.app.data.safe
