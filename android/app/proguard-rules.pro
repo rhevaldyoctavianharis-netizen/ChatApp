@@ -1,0 +1,6 @@
+-keepattributes *Annotation*, InnerClasses, Signature
+-keep,includedescriptorclasses class com.chatku.app.**$$serializer { *; }
+-keepclassmembers class com.chatku.app.** { *** Companion; }
+-keepclasseswithmembers class com.chatku.app.** { kotlinx.serialization.KSerializer serializer(...); }
+-dontwarn org.json.**
+-dontwarn okio.**

@@ -1,0 +1,7 @@
+android/
+AGENTS.md
+PROMPT_ANDROID_KOTLIN.md
+docker-compose.yml
+.github/
+docs/
+LICENSE

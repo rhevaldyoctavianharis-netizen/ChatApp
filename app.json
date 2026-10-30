@@ -1,0 +1,34 @@
+{
+  "name": "Chat Backend",
+  "description": "Backend chat real-time ala WhatsApp: Express + Socket.IO + PostgreSQL (siap deploy ke Heroku).",
+  "keywords": ["chat", "nodejs", "express", "socket.io", "postgresql", "websocket", "heroku"],
+  "repository": "https://github.com/USERNAME/chat-backend",
+  "website": "https://github.com/USERNAME/chat-backend",
+  "success_url": "/",
+  "stack": "heroku-24",
+  "buildpacks": [{ "url": "heroku/nodejs" }],
+  "env": {
+    "NODE_ENV": {
+      "description": "Mode aplikasi (jangan diubah).",
+      "value": "production"
+    },
+    "JWT_SECRET": {
+      "description": "Secret untuk menandatangani JWT. Dibuat acak otomatis oleh Heroku.",
+      "generator": "secret"
+    },
+    "CORS_ORIGIN": {
+      "description": "Origin yang diizinkan (pisahkan koma) atau * untuk semua.",
+      "value": "*",
+      "required": false
+    },
+    "MAX_MEDIA_MB": {
+      "description": "Batas ukuran upload media dalam MB.",
+      "value": "16",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": { "quantity": 1, "size": "basic" }
+  },
+  "addons": [{ "plan": "heroku-postgresql:essential-0" }]
+}
