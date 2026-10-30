@@ -101,7 +101,9 @@ if (require.main === module) {
   migrate()
     .then(() => pool.end())
     .catch((err) => {
-      console.error('[migrate] gagal:', err);
+      console.error('[migrate] gagal:', err.message);
+      if (err.code) console.error(`[migrate] kode PostgreSQL: ${err.code}`);
+      if (err.detail) console.error(`[migrate] detail: ${err.detail}`);
       process.exit(1);
     });
 }
