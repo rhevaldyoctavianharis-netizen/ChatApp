@@ -1,6 +1,6 @@
 # ChatKu
 
-![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?logo=node.js&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-Kotlin%20%2B%20Compose-3DDC84?logo=android&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -61,7 +61,7 @@ Backend tidak menyimpan file media di filesystem lokal. Media disimpan sebagai
 
 | Komponen | Versi minimum | Keterangan |
 |---|---:|---|
-| Node.js | 20.x | Backend dan migrasi database |
+| Node.js | 22.x | Backend dan migrasi database |
 | npm | ikut Node.js | Instalasi dependency |
 | PostgreSQL | 16 | Database lokal atau managed database |
 | Docker | versi terbaru | Opsional, untuk PostgreSQL lokal |
@@ -76,13 +76,13 @@ sudo apt update
 sudo apt install -y git curl unzip openjdk-17-jdk
 ```
 
-Instal Node.js 20 dengan `nvm`:
+Instal Node.js 22 dengan `nvm`:
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.bashrc
-nvm install 20
-nvm use 20
+nvm install 22
+nvm use 22
 ```
 
 Untuk database, gunakan Docker (cara paling konsisten):
@@ -114,7 +114,7 @@ Docker Desktop dapat diunduh dari <https://www.docker.com/products/docker-deskto
 Pilihan termudah adalah **Windows 11 + PowerShell + Docker Desktop**.
 
 1. Instal Git dari <https://git-scm.com/download/win>.
-2. Instal Node.js 20 LTS dari <https://nodejs.org/>.
+2. Instal Node.js 22 LTS dari <https://nodejs.org/>.
 3. Instal JDK 17 (Temurin) dari <https://adoptium.net/>.
 4. Instal Android Studio dari <https://developer.android.com/studio>.
 5. Instal Docker Desktop dari <https://www.docker.com/products/docker-desktop/>.
