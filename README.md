@@ -456,6 +456,7 @@ cd android
 | `REDIS_URL` | Tidak | Diperlukan untuk Socket.IO multi-instance |
 | `DATABASE_SSL` | Tidak | Hanya set `false` untuk database lokal |
 | `DATABASE_SSL_CA` | Tidak | CA PEM untuk PostgreSQL non-lokal |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | Tidak | Set `true` jika CA PostgreSQL tersedia; Heroku memakai TLS tanpa CA aplikasi secara default |
 | `REDIS_TLS_CA` | Tidak | CA PEM untuk Redis TLS bila diperlukan |
 | `PG_POOL_MAX` | Tidak | Default `10` |
 
