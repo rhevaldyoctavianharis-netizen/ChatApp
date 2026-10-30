@@ -217,7 +217,7 @@ Heroku memerlukan kartu pembayaran dan add-on PostgreSQL berbayar. Gunakan
 
 Klik tombol berikut, pilih nama aplikasi, lalu tekan **Deploy app**:
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp/tree/heroku-release-fix)
 
 `app.json` akan mengatur Node.js, PostgreSQL, `NODE_ENV=production`, dan
 `JWT_SECRET` acak. Setelah deployment selesai:
