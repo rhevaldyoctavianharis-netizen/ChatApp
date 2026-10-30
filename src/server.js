@@ -52,6 +52,7 @@ async function main() {
   app.use('/api/media', require('./routes/media'));
   app.use('/api/chats', auth, require('./routes/chats'));
   app.use('/api/channels', auth, require('./routes/channels'));
+  app.use('/api/statuses', auth, require('./routes/statuses'));
   app.use('/api/messages', auth, require('./routes/messages'));
   app.use('/api', auth, require('./routes/users'));
 

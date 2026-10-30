@@ -57,4 +57,7 @@ interface Api {
     @DELETE("api/channels/{id}/follow") suspend fun unfollowChannel(@Path("id") id: String): OkResponse
     @GET("api/channels/{id}/posts") suspend fun channelPosts(@Path("id") id: String): List<ChannelPost>
     @POST("api/channels/{id}/posts") suspend fun createChannelPost(@Path("id") id: String, @Body b: CreateChannelPostBody): ChannelPost
+    @GET("api/statuses") suspend fun statuses(): List<Status>
+    @POST("api/statuses") suspend fun createStatus(@Body b: CreateStatusBody): Status
+    @POST("api/statuses/{id}/view") suspend fun viewStatus(@Path("id") id: String): OkResponse
 }

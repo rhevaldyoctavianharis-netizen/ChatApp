@@ -68,6 +68,7 @@ fun ChatListScreen(
     onNewGroup: () -> Unit,
     onProfile: () -> Unit,
     onChannels: () -> Unit,
+    onStatuses: () -> Unit,
 ) {
     val repo = ServiceLocator.repo
     val chats by repo.chats.collectAsState()
@@ -121,6 +122,7 @@ fun ChatListScreen(
                             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                                 DropdownMenuItem(text = { Text("Grup baru") }, onClick = { menu = false; onNewGroup() })
                                 DropdownMenuItem(text = { Text("Channels") }, onClick = { menu = false; onChannels() })
+                                DropdownMenuItem(text = { Text("Status") }, onClick = { menu = false; onStatuses() })
                                 DropdownMenuItem(
                                     text = { Text("Profil (${me?.displayName.orEmpty()})") },
                                     onClick = { menu = false; onProfile() },

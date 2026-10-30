@@ -129,6 +129,21 @@ data class CreateChannelBody(val name: String, val handle: String, val descripti
 @Serializable
 data class CreateChannelPostBody(val body: String, @SerialName("media_id") val mediaId: String? = null)
 
+@Serializable
+data class Status(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("display_name") val displayName: String = "",
+    @SerialName("avatar_media_id") val avatarMediaId: String? = null,
+    val body: String,
+    @SerialName("media_id") val mediaId: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    val viewed: Boolean = false,
+)
+
+@Serializable
+data class CreateStatusBody(val body: String, @SerialName("media_id") val mediaId: String? = null)
+
 // ---------- Request bodies ----------
 @Serializable
 data class RegisterBody(

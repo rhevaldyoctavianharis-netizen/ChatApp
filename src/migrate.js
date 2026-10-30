@@ -107,6 +107,23 @@ CREATE TABLE IF NOT EXISTS channel_posts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_channel_posts_time ON channel_posts(channel_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS statuses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 700),
+  media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours')
+);
+CREATE INDEX IF NOT EXISTS idx_statuses_active ON statuses(expires_at, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS status_views (
+  status_id UUID NOT NULL REFERENCES statuses(id) ON DELETE CASCADE,
+  viewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (status_id, viewer_id)
+);
 `;
 
 async function migrate() {
