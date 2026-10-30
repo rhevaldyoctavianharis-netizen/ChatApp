@@ -80,6 +80,33 @@ CREATE TABLE IF NOT EXISTS push_tokens (
   platform TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS channels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 80),
+  description TEXT NOT NULL DEFAULT '' CHECK (char_length(description) <= 500),
+  handle TEXT UNIQUE NOT NULL CHECK (handle ~ '^[a-z0-9_]{3,40}$'),
+  avatar_media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_channels_owner ON channels(owner_id);
+
+CREATE TABLE IF NOT EXISTS channel_followers (
+  channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (channel_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS channel_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4096),
+  media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_channel_posts_time ON channel_posts(channel_id, created_at DESC);
 `;
 
 async function migrate() {

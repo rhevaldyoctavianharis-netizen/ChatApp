@@ -102,6 +102,33 @@ data class Receipt(
 @Serializable
 data class OkResponse(val ok: Boolean = true, val muted: Boolean? = null, val marked: Int? = null)
 
+@Serializable
+data class Channel(
+    val id: String,
+    @SerialName("owner_id") val ownerId: String,
+    val name: String,
+    val description: String = "",
+    val handle: String,
+    @SerialName("avatar_media_id") val avatarMediaId: String? = null,
+    val following: Boolean = false,
+    val followers: Int = 0,
+)
+
+@Serializable
+data class ChannelPost(
+    val id: String,
+    @SerialName("channel_id") val channelId: String,
+    val body: String,
+    @SerialName("media_id") val mediaId: String? = null,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class CreateChannelBody(val name: String, val handle: String, val description: String = "")
+
+@Serializable
+data class CreateChannelPostBody(val body: String, @SerialName("media_id") val mediaId: String? = null)
+
 // ---------- Request bodies ----------
 @Serializable
 data class RegisterBody(

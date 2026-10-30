@@ -50,4 +50,11 @@ interface Api {
     @Multipart
     @POST("api/media")
     suspend fun upload(@Part file: MultipartBody.Part): MediaInfo
+
+    @GET("api/channels") suspend fun channels(@Query("q") query: String? = null): List<Channel>
+    @POST("api/channels") suspend fun createChannel(@Body b: CreateChannelBody): Channel
+    @POST("api/channels/{id}/follow") suspend fun followChannel(@Path("id") id: String): OkResponse
+    @DELETE("api/channels/{id}/follow") suspend fun unfollowChannel(@Path("id") id: String): OkResponse
+    @GET("api/channels/{id}/posts") suspend fun channelPosts(@Path("id") id: String): List<ChannelPost>
+    @POST("api/channels/{id}/posts") suspend fun createChannelPost(@Path("id") id: String, @Body b: CreateChannelPostBody): ChannelPost
 }

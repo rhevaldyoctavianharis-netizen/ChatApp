@@ -33,6 +33,7 @@ PostgreSQL** dan klien Android native **Kotlin + Jetpack Compose**.
 
 - Registrasi dan login dengan nomor telepon format E.164.
 - Chat langsung dan grup.
+- Channels publik dengan follow dan posting pemilik channel.
 - Pesan teks, foto, video, audio, dan dokumen.
 - Balas, edit, hapus untuk semua, reaksi emoji, dan status terkirim/dibaca.
 - Indikator mengetik, online/offline, last seen, unread badge, dan mute chat.
@@ -526,6 +527,11 @@ menggunakan `snake_case`; error berbentuk `{ "error": "pesan" }`.
 | POST | `/api/chats/:id/messages` | Kirim pesan via REST |
 | POST | `/api/media` | Upload media |
 | GET | `/api/media/:id` | Ambil media yang berhak diakses |
+| GET | `/api/channels` | Daftar dan cari channel |
+| POST | `/api/channels` | Buat channel |
+| POST/DELETE | `/api/channels/:id/follow` | Ikuti atau berhenti mengikuti channel |
+| GET | `/api/channels/:id/posts` | Daftar posting channel |
+| POST | `/api/channels/:id/posts` | Buat posting sebagai pemilik channel |
 
 Endpoint terproteksi memakai:
 
