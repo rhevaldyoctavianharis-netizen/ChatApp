@@ -33,6 +33,8 @@ PostgreSQL** dan klien Android native **Kotlin + Jetpack Compose**.
 
 - Registrasi dan login dengan nomor telepon format E.164.
 - Chat langsung dan grup.
+- Channels publik dengan follow dan posting pemilik channel.
+- Status singkat yang kedaluwarsa otomatis setelah 24 jam.
 - Pesan teks, foto, video, audio, dan dokumen.
 - Balas, edit, hapus untuk semua, reaksi emoji, dan status terkirim/dibaca.
 - Indikator mengetik, online/offline, last seen, unread badge, dan mute chat.
@@ -217,7 +219,7 @@ Heroku memerlukan kartu pembayaran dan add-on PostgreSQL berbayar. Gunakan
 
 Klik tombol berikut, pilih nama aplikasi, lalu tekan **Deploy app**:
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp/tree/heroku-release-fix)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rhevaldyoctavianharis-netizen/ChatApp/tree/heroku-ssl-release-fix)
 
 `app.json` akan mengatur Node.js, PostgreSQL, `NODE_ENV=production`, dan
 `JWT_SECRET` acak. Setelah deployment selesai:
@@ -456,6 +458,7 @@ cd android
 | `REDIS_URL` | Tidak | Diperlukan untuk Socket.IO multi-instance |
 | `DATABASE_SSL` | Tidak | Hanya set `false` untuk database lokal |
 | `DATABASE_SSL_CA` | Tidak | CA PEM untuk PostgreSQL non-lokal |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | Tidak | Set `true` jika CA PostgreSQL tersedia; Heroku memakai TLS tanpa CA aplikasi secara default |
 | `REDIS_TLS_CA` | Tidak | CA PEM untuk Redis TLS bila diperlukan |
 | `PG_POOL_MAX` | Tidak | Default `10` |
 
@@ -525,6 +528,14 @@ menggunakan `snake_case`; error berbentuk `{ "error": "pesan" }`.
 | POST | `/api/chats/:id/messages` | Kirim pesan via REST |
 | POST | `/api/media` | Upload media |
 | GET | `/api/media/:id` | Ambil media yang berhak diakses |
+| GET | `/api/channels` | Daftar dan cari channel |
+| POST | `/api/channels` | Buat channel |
+| POST/DELETE | `/api/channels/:id/follow` | Ikuti atau berhenti mengikuti channel |
+| GET | `/api/channels/:id/posts` | Daftar posting channel |
+| POST | `/api/channels/:id/posts` | Buat posting sebagai pemilik channel |
+| GET | `/api/statuses` | Daftar status aktif dari kontak |
+| POST | `/api/statuses` | Buat status teks/media |
+| POST | `/api/statuses/:id/view` | Tandai status sudah dilihat |
 
 Endpoint terproteksi memakai:
 
@@ -567,3 +578,48 @@ ChatApp/
 ## Lisensi
 
 Proyek ini menggunakan [MIT License](LICENSE).
+
+## OTP, anonim, premium, dan admin
+
+OTP email memakai Brevo dan hanya diproses backend. Isi `BREVO_API_KEY`,
+`BREVO_SENDER_EMAIL`, dan `BREVO_SENDER_NAME`; jangan pernah memasukkan API key
+ke APK. Endpoint yang tersedia adalah `POST /api/auth/request-otp` dan
+`POST /api/auth/verify-otp`.
+
+Login anonim membutuhkan header `X-Device-Id` dari aplikasi dan hanya dapat
+digunakan sekali untuk setiap device hash. Identitas perangkat dapat dipalsukan
+pada perangkat rooted atau client modifikasi, sehingga fitur ini bukan pengganti
+attestation seperti Play Integrity.
+
+Untuk menjadikan akun sebagai admin saat migrasi, set `ADMIN_EMAIL` ke email
+akun tersebut. Dashboard dan REST admin memerlukan `ADMIN_DASHBOARD_KEY`.
+Sediakan `DEVICE_HASH_SECRET` yang acak dan panjang. Badge premium dikelola
+melalui endpoint admin dan disimpan sebagai identifier seperti `verified`,
+`programmer`, `creator`, atau `gamer`. Rotasi key dan pembatasan akses dashboard
+tetap wajib dilakukan di deployment production.
+
+Pesan dasar tambahan tersedia melalui REST dan Socket.IO: `poll`, `location`,
+dan `contact`. Payload dikirim sebagai JSON pada field `body`, contohnya
+`{"question":"Pilihan?","options":["A","B"]}`, `{"latitude":-6.2,"longitude":106.8}`,
+atau `{"name":"Dina","phone":"+628..."}`. Admin grup dapat mengatur
+`message_ttl_seconds` ke `0`, `86400`, `604800`, atau `7776000` melalui
+`PATCH /api/chats/:id`; nilai selain itu ditolak server.
+
+## Direktori grup dan komunitas publik
+
+Grup dapat dipublikasikan saat dibuat dengan `is_public: true`,
+`public_handle`, dan `community_name`. Pengguna yang sudah login dapat mencari
+direktori melalui `GET /api/discovery/groups?q=kotlin`, lalu bergabung dengan
+`POST /api/discovery/groups/:id/join` tanpa membagikan URL undangan. Pemilik
+tetap dapat mengubah metadata grup atau menghapus publikasinya melalui endpoint
+pengaturan grup. Jangan mempublikasikan grup yang berisi data pribadi.
+
+Android menyediakan menu **Temukan grup & komunitas** serta opsi
+**Publikasikan di direktori grup** saat membuat grup.
+
+## Personalisasi aplikasi
+
+Menu **Pengaturan tampilan** menyediakan mode gelap, efek glass/transparan, dan
+warna aksen. Preferensi disimpan lokal di perangkat. Struktur ini dapat
+diperluas untuk wallpaper, ukuran teks, bentuk bubble, animasi, dan preset tema
+tanpa menyalin aset atau kode aplikasi lain.

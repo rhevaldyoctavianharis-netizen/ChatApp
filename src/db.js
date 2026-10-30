@@ -2,11 +2,13 @@ const { Pool } = require('pg');
 
 const url = process.env.DATABASE_URL || 'postgres://chat:chat@localhost:5432/chatapp';
 const isLocal = /localhost|127\.0\.0\.1/.test(url);
+const sslCa = process.env.DATABASE_SSL_CA;
+const verifyTls = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true' || Boolean(sslCa);
 const ssl = process.env.DATABASE_SSL === 'false' || isLocal
   ? false
   : {
-      rejectUnauthorized: true,
-      ...(process.env.DATABASE_SSL_CA ? { ca: process.env.DATABASE_SSL_CA } : {}),
+      rejectUnauthorized: verifyTls,
+      ...(sslCa ? { ca: sslCa } : {}),
     };
 
 const pool = new Pool({

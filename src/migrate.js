@@ -11,6 +11,12 @@ CREATE TABLE IF NOT EXISTS users (
   last_seen TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS badges JSONB NOT NULL DEFAULT '[]'::jsonb;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,8 +35,17 @@ CREATE TABLE IF NOT EXISTS chats (
   description TEXT,
   direct_key TEXT UNIQUE,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  message_ttl_seconds INTEGER NOT NULL DEFAULT 0 CHECK (message_ttl_seconds IN (0, 86400, 604800, 7776000)),
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  public_handle TEXT UNIQUE,
+  community_name TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS message_ttl_seconds INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS public_handle TEXT;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS community_name TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chats_public_handle ON chats(public_handle) WHERE public_handle IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS chat_members (
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
@@ -47,7 +62,7 @@ CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text','image','video','audio','file')),
+  type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text','image','video','audio','file','poll','location','contact')),
   body TEXT,
   media_id UUID REFERENCES media(id) ON DELETE SET NULL,
   reply_to UUID REFERENCES messages(id) ON DELETE SET NULL,
@@ -56,6 +71,11 @@ CREATE TABLE IF NOT EXISTS messages (
   deleted_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_messages_chat_time ON messages(chat_id, created_at DESC);
+DO $$ BEGIN
+  ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_type_check;
+  ALTER TABLE messages ADD CONSTRAINT messages_type_check
+    CHECK (type IN ('text','image','video','audio','file','poll','location','contact'));
+END $$;
 
 CREATE TABLE IF NOT EXISTS message_receipts (
   message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
@@ -80,6 +100,81 @@ CREATE TABLE IF NOT EXISTS push_tokens (
   platform TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS channels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 80),
+  description TEXT NOT NULL DEFAULT '' CHECK (char_length(description) <= 500),
+  handle TEXT UNIQUE NOT NULL CHECK (handle ~ '^[a-z0-9_]{3,40}$'),
+  avatar_media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_channels_owner ON channels(owner_id);
+
+CREATE TABLE IF NOT EXISTS channel_followers (
+  channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (channel_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS channel_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4096),
+  media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_channel_posts_time ON channel_posts(channel_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS statuses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 700),
+  media_id UUID REFERENCES media(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours')
+);
+CREATE INDEX IF NOT EXISTS idx_statuses_active ON statuses(expires_at, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS status_views (
+  status_id UUID NOT NULL REFERENCES statuses(id) ON DELETE CASCADE,
+  viewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (status_id, viewer_id)
+);
+
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  purpose TEXT NOT NULL CHECK (purpose IN ('login','register')),
+  device_hash TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_otp_email_active ON otp_codes(email, expires_at);
+
+CREATE TABLE IF NOT EXISTS anonymous_devices (
+  device_hash TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ip_hash TEXT,
+  user_agent TEXT,
+  device_info JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 async function migrate() {
@@ -88,6 +183,16 @@ async function migrate() {
     await client.query('SELECT pg_advisory_lock(727274)');
     await client.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
     await client.query(SCHEMA);
+    if (process.env.ADMIN_EMAIL) {
+      await client.query(
+        `UPDATE users SET badges = CASE
+           WHEN badges @> '["admin"]'::jsonb THEN badges
+           ELSE badges || '["admin"]'::jsonb
+         END
+         WHERE lower(email) = lower($1)`,
+        [process.env.ADMIN_EMAIL],
+      );
+    }
     console.log('[migrate] skema database siap');
   } finally {
     await client.query('SELECT pg_advisory_unlock(727274)').catch(() => {});

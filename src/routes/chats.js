@@ -57,9 +57,13 @@ router.post('/direct', wrap(async (req, res) => {
 router.post('/group', wrap(async (req, res) => {
   const name = String(req.body.name || '').trim();
   const description = req.body.description ? String(req.body.description).slice(0, 500) : null;
+  const isPublic = req.body.is_public === true;
+  const publicHandle = isPublic ? String(req.body.public_handle || '').trim().toLowerCase() : null;
+  const communityName = isPublic ? String(req.body.community_name || '').trim().slice(0, 80) || name : null;
   const memberIds = uniq((req.body.member_ids || []).filter((id) => id !== req.userId));
   if (!name || name.length > 60) throw new HttpError(400, 'Nama grup 1-60 karakter');
-  if (!memberIds.length) throw new HttpError(400, 'Minimal 1 anggota selain Anda');
+  if (isPublic && !/^[a-z0-9_]{3,40}$/.test(publicHandle || '')) throw new HttpError(400, 'Handle publik 3-40 karakter');
+  if (!memberIds.length && !isPublic) throw new HttpError(400, 'Minimal 1 anggota selain Anda');
   if (memberIds.length > 255) throw new HttpError(400, 'Maksimal 256 anggota');
   const found = await query('SELECT id FROM users WHERE id = ANY($1::uuid[])', [memberIds]);
   if (found.rows.length !== memberIds.length) throw new HttpError(400, 'Ada anggota yang tidak ditemukan');
@@ -69,8 +73,9 @@ router.post('/group', wrap(async (req, res) => {
   try {
     await client.query('BEGIN');
     const c = await client.query(
-      "INSERT INTO chats (type, name, description, created_by) VALUES ('group',$1,$2,$3) RETURNING id",
-      [name, description, req.userId]);
+      `INSERT INTO chats (type, name, description, created_by, is_public, public_handle, community_name)
+       VALUES ('group',$1,$2,$3,$4,$5,$6) RETURNING id`,
+      [name, description, req.userId, isPublic, publicHandle, communityName]);
     chatId = c.rows[0].id;
     await client.query("INSERT INTO chat_members (chat_id, user_id, role) VALUES ($1,$2,'admin')", [chatId, req.userId]);
     await client.query('INSERT INTO chat_members (chat_id, user_id) SELECT $1, unnest($2::uuid[])', [chatId, memberIds]);
@@ -97,9 +102,24 @@ router.patch('/:id', wrap(async (req, res) => {
   if (me.role !== 'admin') throw new HttpError(403, 'Hanya admin');
   const name = req.body.name !== undefined ? String(req.body.name).trim() : null;
   if (name !== null && (!name || name.length > 60)) throw new HttpError(400, 'Nama grup 1-60 karakter');
+  const ttl = req.body.message_ttl_seconds === undefined ? null : Number(req.body.message_ttl_seconds);
+  if (ttl !== null && ![0, 86400, 604800, 7776000].includes(ttl)) {
+    throw new HttpError(400, 'Durasi pesan sementara tidak valid');
+  }
+  const isPublic = req.body.is_public === undefined ? null : req.body.is_public === true;
+  const publicHandle = isPublic === true
+    ? String(req.body.public_handle || '').trim().toLowerCase()
+    : isPublic === false ? null : null;
+  if (isPublic === true && !/^[a-z0-9_]{3,40}$/.test(publicHandle)) {
+    throw new HttpError(400, 'Handle publik 3-40 karakter');
+  }
   await query(
-    'UPDATE chats SET name = COALESCE($2, name), description = COALESCE($3, description) WHERE id = $1',
-    [req.params.id, name, req.body.description !== undefined ? String(req.body.description).slice(0, 500) : null]);
+    `UPDATE chats SET name = COALESCE($2, name), description = COALESCE($3, description),
+      message_ttl_seconds = COALESCE($4, message_ttl_seconds),
+      is_public = COALESCE($5, is_public), public_handle = CASE WHEN $5 = false THEN NULL ELSE COALESCE($6, public_handle) END,
+      community_name = CASE WHEN $5 = false THEN NULL ELSE COALESCE($7, community_name) END WHERE id = $1`,
+    [req.params.id, name, req.body.description !== undefined ? String(req.body.description).slice(0, 500) : null, ttl,
+      isPublic, publicHandle, req.body.community_name ? String(req.body.community_name).slice(0, 80) : null]);
   const io = req.app.get('io');
   io.to(`chat:${req.params.id}`).emit('chat:updated', { chat_id: req.params.id });
   res.json(await getChat(req.params.id, req.userId));
@@ -172,6 +192,7 @@ router.post('/:id/messages', wrap(async (req, res) => {
     chatId: req.params.id,
     senderId: req.userId,
     body: req.body.body,
+    type: req.body.type,
     mediaId: req.body.media_id,
     replyTo: req.body.reply_to,
     clientId: req.body.client_id,

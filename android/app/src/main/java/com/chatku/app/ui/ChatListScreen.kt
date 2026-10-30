@@ -21,7 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,6 +34,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -67,6 +72,10 @@ fun ChatListScreen(
     onNewChat: () -> Unit,
     onNewGroup: () -> Unit,
     onProfile: () -> Unit,
+    onChannels: () -> Unit,
+    onStatuses: () -> Unit,
+    onPublicGroups: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val repo = ServiceLocator.repo
     val chats by repo.chats.collectAsState()
@@ -119,6 +128,10 @@ fun ChatListScreen(
                             IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "Menu") }
                             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                                 DropdownMenuItem(text = { Text("Grup baru") }, onClick = { menu = false; onNewGroup() })
+                                DropdownMenuItem(text = { Text("Channels") }, onClick = { menu = false; onChannels() })
+                                DropdownMenuItem(text = { Text("Status") }, onClick = { menu = false; onStatuses() })
+                                DropdownMenuItem(text = { Text("Temukan grup & komunitas") }, onClick = { menu = false; onPublicGroups() })
+                                DropdownMenuItem(text = { Text("Pengaturan tampilan") }, onClick = { menu = false; onSettings() })
                                 DropdownMenuItem(
                                     text = { Text("Profil (${me?.displayName.orEmpty()})") },
                                     onClick = { menu = false; onProfile() },
@@ -133,6 +146,34 @@ fun ChatListScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = onNewChat, containerColor = wa.accent, contentColor = Color.White) {
                 Icon(Icons.Filled.Chat, "Chat baru")
+            }
+        },
+        bottomBar = {
+            NavigationBar(containerColor = wa.inputBar) {
+                NavigationBarItem(
+                    selected = true,
+                    onClick = {},
+                    icon = { Icon(Icons.Filled.Chat, null) },
+                    label = { Text("Chat") },
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onStatuses,
+                    icon = { Icon(Icons.Filled.Update, null) },
+                    label = { Text("Pembaruan") },
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onPublicGroups,
+                    icon = { Icon(Icons.Filled.People, null) },
+                    label = { Text("Komunitas") },
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onSettings,
+                    icon = { Icon(Icons.Filled.Settings, null) },
+                    label = { Text("Setelan") },
+                )
             }
         },
     ) { pad ->

@@ -46,8 +46,18 @@ fun AppNav() {
                 onNewChat = { nav.navigate("newchat") },
                 onNewGroup = { nav.navigate("newgroup") },
                 onProfile = { nav.navigate("profile") },
+                onChannels = { nav.navigate("channels") },
+                onStatuses = { nav.navigate("statuses") },
+                onPublicGroups = { nav.navigate("public-groups") },
+                onSettings = { nav.navigate("settings") },
             )
         }
+        composable("channels") { ChannelsScreen(onBack = { nav.popBackStack() }) }
+        composable("statuses") { StatusesScreen(onBack = { nav.popBackStack() }) }
+        composable("public-groups") {
+            PublicGroupsScreen(onBack = { nav.popBackStack() }, onJoined = { id -> nav.navigate("chat/$id") })
+        }
+        composable("settings") { SettingsScreen(onBack = { nav.popBackStack() }) }
         composable("chat/{chatId}", arguments = listOf(navArgument("chatId") { type = NavType.StringType })) { e ->
             val id = e.arguments?.getString("chatId").orEmpty()
             ChatScreen(id, onBack = { nav.popBackStack() }, onGroupInfo = { nav.navigate("groupinfo/$id") })

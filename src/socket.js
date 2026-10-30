@@ -48,7 +48,7 @@ module.exports = function registerSocket(io) {
     socket.on('message:send', safe(async (p) => {
       const message = await sendMessage(io, {
         chatId: p.chat_id, senderId: uid, body: p.body,
-        mediaId: p.media_id, replyTo: p.reply_to, clientId: p.client_id,
+        mediaId: p.media_id, replyTo: p.reply_to, clientId: p.client_id, type: p.type,
       });
       return { message };
     }));

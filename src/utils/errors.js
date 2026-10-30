@@ -19,6 +19,11 @@ const toUser = (r) => ({
   about: r.about,
   avatar_media_id: r.avatar_media_id,
   last_seen: r.last_seen,
+  email: r.email,
+  is_anonymous: r.is_anonymous,
+  is_banned: r.is_banned,
+  premium_until: r.premium_until,
+  badges: r.badges || [],
   created_at: r.created_at,
 });
 

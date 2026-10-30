@@ -5,6 +5,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.chatku.app.data.Net
+import com.chatku.app.data.Appearance
 import com.chatku.app.data.Session
 import com.chatku.app.util.Notifier
 
@@ -13,6 +14,7 @@ class ChatApp : Application() {
         super.onCreate()
         ServiceLocator.app = this
         Session.init(this)
+        Appearance.init(this)
         Net.configure(Session.baseUrl)
         Notifier.createChannel(this)
 

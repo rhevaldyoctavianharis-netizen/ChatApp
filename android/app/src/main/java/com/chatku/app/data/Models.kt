@@ -35,6 +35,9 @@ data class Chat(
     val type: String,
     val name: String? = null,
     val description: String? = null,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("public_handle") val publicHandle: String? = null,
+    @SerialName("message_ttl_seconds") val messageTtlSeconds: Int = 0,
     val role: String? = null,
     val muted: Boolean = false,
     val unread: Int = 0,
@@ -102,6 +105,48 @@ data class Receipt(
 @Serializable
 data class OkResponse(val ok: Boolean = true, val muted: Boolean? = null, val marked: Int? = null)
 
+@Serializable
+data class Channel(
+    val id: String,
+    @SerialName("owner_id") val ownerId: String,
+    val name: String,
+    val description: String = "",
+    val handle: String,
+    @SerialName("avatar_media_id") val avatarMediaId: String? = null,
+    val following: Boolean = false,
+    val followers: Int = 0,
+)
+
+@Serializable
+data class ChannelPost(
+    val id: String,
+    @SerialName("channel_id") val channelId: String,
+    val body: String,
+    @SerialName("media_id") val mediaId: String? = null,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class CreateChannelBody(val name: String, val handle: String, val description: String = "")
+
+@Serializable
+data class CreateChannelPostBody(val body: String, @SerialName("media_id") val mediaId: String? = null)
+
+@Serializable
+data class Status(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("display_name") val displayName: String = "",
+    @SerialName("avatar_media_id") val avatarMediaId: String? = null,
+    val body: String,
+    @SerialName("media_id") val mediaId: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    val viewed: Boolean = false,
+)
+
+@Serializable
+data class CreateStatusBody(val body: String, @SerialName("media_id") val mediaId: String? = null)
+
 // ---------- Request bodies ----------
 @Serializable
 data class RegisterBody(
@@ -112,6 +157,15 @@ data class RegisterBody(
 
 @Serializable
 data class LoginBody(val phone: String, val password: String)
+
+@Serializable
+data class OtpRequestBody(val email: String, val purpose: String = "login")
+
+@Serializable
+data class OtpVerifyBody(val email: String, val code: String, @SerialName("display_name") val displayName: String = "")
+
+@Serializable
+data class AnonymousBody(@SerialName("device_info") val deviceInfo: Map<String, String>)
 
 @Serializable
 data class UpdateMeBody(
@@ -131,10 +185,27 @@ data class GroupBody(
     val name: String,
     val description: String? = null,
     @SerialName("member_ids") val memberIds: List<String>,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("public_handle") val publicHandle: String? = null,
+    @SerialName("community_name") val communityName: String? = null,
 )
 
 @Serializable
-data class UpdateChatBody(val name: String? = null, val description: String? = null)
+data class PublicGroup(
+    val id: String,
+    val name: String,
+    val description: String? = null,
+    @SerialName("public_handle") val publicHandle: String? = null,
+    @SerialName("community_name") val communityName: String? = null,
+    @SerialName("member_count") val memberCount: Int = 0,
+)
+
+@Serializable
+data class UpdateChatBody(
+    val name: String? = null,
+    val description: String? = null,
+    @SerialName("message_ttl_seconds") val messageTtlSeconds: Int? = null,
+)
 
 @Serializable
 data class MuteBody(val muted: Boolean)
@@ -145,6 +216,7 @@ data class AddMembersBody(@SerialName("user_ids") val userIds: List<String>)
 @Serializable
 data class SendBody(
     val body: String? = null,
+    val type: String? = null,
     @SerialName("media_id") val mediaId: String? = null,
     @SerialName("reply_to") val replyTo: String? = null,
     @SerialName("client_id") val clientId: String? = null,

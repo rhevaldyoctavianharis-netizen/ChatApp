@@ -12,6 +12,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import android.provider.Settings
+import com.chatku.app.ServiceLocator
 
 object Net {
     val json = Json {
@@ -39,7 +41,9 @@ object Net {
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val token = Session.token.value
+                val deviceId = Settings.Secure.getString(ServiceLocator.app.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
                 val req = chain.request().newBuilder().apply {
+                    header("X-Device-Id", deviceId)
                     if (token != null) header("Authorization", "Bearer $token")
                 }.build()
                 val res = chain.proceed(req)

@@ -15,6 +15,9 @@ import retrofit2.http.Query
 interface Api {
     @POST("api/auth/register") suspend fun register(@Body b: RegisterBody): AuthResponse
     @POST("api/auth/login") suspend fun login(@Body b: LoginBody): AuthResponse
+    @POST("api/auth/request-otp") suspend fun requestOtp(@Body b: OtpRequestBody): OkResponse
+    @POST("api/auth/verify-otp") suspend fun verifyOtp(@Body b: OtpVerifyBody): AuthResponse
+    @POST("api/auth/anonymous") suspend fun anonymous(@Body b: AnonymousBody): AuthResponse
 
     @GET("api/me") suspend fun me(): User
     @PATCH("api/me") suspend fun updateMe(@Body b: UpdateMeBody): User
@@ -40,6 +43,9 @@ interface Api {
 
     @POST("api/chats/{id}/messages") suspend fun send(@Path("id") id: String, @Body b: SendBody): Message
     @POST("api/chats/{id}/read") suspend fun markRead(@Path("id") id: String): OkResponse
+    @GET("api/discovery/groups") suspend fun publicGroups(@Query("q") query: String? = null): List<PublicGroup>
+    @POST("api/discovery/groups/{id}/join") suspend fun joinPublicGroup(@Path("id") id: String): Chat
+    @DELETE("api/discovery/groups/{id}/join") suspend fun leavePublicGroup(@Path("id") id: String): OkResponse
 
     @PATCH("api/messages/{id}") suspend fun edit(@Path("id") id: String, @Body b: EditBody): Message
     @DELETE("api/messages/{id}") suspend fun delete(@Path("id") id: String): OkResponse
@@ -50,4 +56,14 @@ interface Api {
     @Multipart
     @POST("api/media")
     suspend fun upload(@Part file: MultipartBody.Part): MediaInfo
+
+    @GET("api/channels") suspend fun channels(@Query("q") query: String? = null): List<Channel>
+    @POST("api/channels") suspend fun createChannel(@Body b: CreateChannelBody): Channel
+    @POST("api/channels/{id}/follow") suspend fun followChannel(@Path("id") id: String): OkResponse
+    @DELETE("api/channels/{id}/follow") suspend fun unfollowChannel(@Path("id") id: String): OkResponse
+    @GET("api/channels/{id}/posts") suspend fun channelPosts(@Path("id") id: String): List<ChannelPost>
+    @POST("api/channels/{id}/posts") suspend fun createChannelPost(@Path("id") id: String, @Body b: CreateChannelPostBody): ChannelPost
+    @GET("api/statuses") suspend fun statuses(): List<Status>
+    @POST("api/statuses") suspend fun createStatus(@Body b: CreateStatusBody): Status
+    @POST("api/statuses/{id}/view") suspend fun viewStatus(@Path("id") id: String): OkResponse
 }
