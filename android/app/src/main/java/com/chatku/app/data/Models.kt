@@ -35,6 +35,8 @@ data class Chat(
     val type: String,
     val name: String? = null,
     val description: String? = null,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("public_handle") val publicHandle: String? = null,
     @SerialName("message_ttl_seconds") val messageTtlSeconds: Int = 0,
     val role: String? = null,
     val muted: Boolean = false,
@@ -183,6 +185,19 @@ data class GroupBody(
     val name: String,
     val description: String? = null,
     @SerialName("member_ids") val memberIds: List<String>,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("public_handle") val publicHandle: String? = null,
+    @SerialName("community_name") val communityName: String? = null,
+)
+
+@Serializable
+data class PublicGroup(
+    val id: String,
+    val name: String,
+    val description: String? = null,
+    @SerialName("public_handle") val publicHandle: String? = null,
+    @SerialName("community_name") val communityName: String? = null,
+    @SerialName("member_count") val memberCount: Int = 0,
 )
 
 @Serializable

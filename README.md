@@ -604,3 +604,22 @@ dan `contact`. Payload dikirim sebagai JSON pada field `body`, contohnya
 atau `{"name":"Dina","phone":"+628..."}`. Admin grup dapat mengatur
 `message_ttl_seconds` ke `0`, `86400`, `604800`, atau `7776000` melalui
 `PATCH /api/chats/:id`; nilai selain itu ditolak server.
+
+## Direktori grup dan komunitas publik
+
+Grup dapat dipublikasikan saat dibuat dengan `is_public: true`,
+`public_handle`, dan `community_name`. Pengguna yang sudah login dapat mencari
+direktori melalui `GET /api/discovery/groups?q=kotlin`, lalu bergabung dengan
+`POST /api/discovery/groups/:id/join` tanpa membagikan URL undangan. Pemilik
+tetap dapat mengubah metadata grup atau menghapus publikasinya melalui endpoint
+pengaturan grup. Jangan mempublikasikan grup yang berisi data pribadi.
+
+Android menyediakan menu **Temukan grup & komunitas** serta opsi
+**Publikasikan di direktori grup** saat membuat grup.
+
+## Personalisasi aplikasi
+
+Menu **Pengaturan tampilan** menyediakan mode gelap, efek glass/transparan, dan
+warna aksen. Preferensi disimpan lokal di perangkat. Struktur ini dapat
+diperluas untuk wallpaper, ukuran teks, bentuk bubble, animasi, dan preset tema
+tanpa menyalin aset atau kode aplikasi lain.

@@ -13,7 +13,7 @@ async function getMemberIds(chatId) {
 }
 
 const CHAT_SELECT = `
-SELECT c.id, c.type, c.name, c.description, c.message_ttl_seconds, c.created_at, cm.role, cm.muted,
+SELECT c.id, c.type, c.name, c.description, c.message_ttl_seconds, c.is_public, c.public_handle, c.community_name, c.created_at, cm.role, cm.muted,
   (SELECT COUNT(*) FROM message_receipts r JOIN messages m ON m.id = r.message_id
      WHERE m.chat_id = c.id AND r.user_id = $1 AND r.read_at IS NULL AND m.deleted_at IS NULL)::int AS unread,
   CASE WHEN c.type = 'direct' THEN (

@@ -399,8 +399,15 @@ class Repo(private val app: Application) {
         return r
     }
 
-    suspend fun createGroup(name: String, description: String?, memberIds: List<String>): Result<Chat> {
-        val r = safe { Net.api.group(GroupBody(name, description, memberIds)) }
+    suspend fun createGroup(
+        name: String,
+        description: String?,
+        memberIds: List<String>,
+        isPublic: Boolean = false,
+        publicHandle: String? = null,
+        communityName: String? = null,
+    ): Result<Chat> {
+        val r = safe { Net.api.group(GroupBody(name, description, memberIds, isPublic, publicHandle, communityName)) }
         r.onSuccess { c ->
             c.members?.let { m -> members.update { it + (c.id to m) } }
             chats.update { l -> sortChats(listOf(c) + l.filter { it.id != c.id }) }

@@ -36,9 +36,16 @@ CREATE TABLE IF NOT EXISTS chats (
   direct_key TEXT UNIQUE,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   message_ttl_seconds INTEGER NOT NULL DEFAULT 0 CHECK (message_ttl_seconds IN (0, 86400, 604800, 7776000)),
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  public_handle TEXT UNIQUE,
+  community_name TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE chats ADD COLUMN IF NOT EXISTS message_ttl_seconds INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS public_handle TEXT;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS community_name TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chats_public_handle ON chats(public_handle) WHERE public_handle IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS chat_members (
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,

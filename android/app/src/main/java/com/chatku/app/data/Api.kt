@@ -43,6 +43,9 @@ interface Api {
 
     @POST("api/chats/{id}/messages") suspend fun send(@Path("id") id: String, @Body b: SendBody): Message
     @POST("api/chats/{id}/read") suspend fun markRead(@Path("id") id: String): OkResponse
+    @GET("api/discovery/groups") suspend fun publicGroups(@Query("q") query: String? = null): List<PublicGroup>
+    @POST("api/discovery/groups/{id}/join") suspend fun joinPublicGroup(@Path("id") id: String): Chat
+    @DELETE("api/discovery/groups/{id}/join") suspend fun leavePublicGroup(@Path("id") id: String): OkResponse
 
     @PATCH("api/messages/{id}") suspend fun edit(@Path("id") id: String, @Body b: EditBody): Message
     @DELETE("api/messages/{id}") suspend fun delete(@Path("id") id: String): OkResponse

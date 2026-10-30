@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import com.chatku.app.data.Appearance
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -41,10 +43,11 @@ val LocalWa = staticCompositionLocalOf { LightWa }
 
 @Composable
 fun ChatKuTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+    val customDark by Appearance.dark
+    val dark = customDark
     val scheme = if (dark) {
         darkColorScheme(
-            primary = Color(0xFF00A884), onPrimary = Color.White,
+            primary = Color(Appearance.accent.value), onPrimary = Color.White,
             background = Color(0xFF111B21), onBackground = Color(0xFFE9EDEF),
             surface = Color(0xFF111B21), onSurface = Color(0xFFE9EDEF),
             surfaceVariant = Color(0xFF202C33), onSurfaceVariant = Color(0xFF8696A0),
@@ -52,7 +55,7 @@ fun ChatKuTheme(content: @Composable () -> Unit) {
         )
     } else {
         lightColorScheme(
-            primary = Color(0xFF075E54), onPrimary = Color.White,
+            primary = Color(Appearance.accent.value), onPrimary = Color.White,
             background = Color.White, onBackground = Color(0xFF111B21),
             surface = Color.White, onSurface = Color(0xFF111B21),
             surfaceVariant = Color(0xFFF0F2F5), onSurfaceVariant = Color(0xFF667781),

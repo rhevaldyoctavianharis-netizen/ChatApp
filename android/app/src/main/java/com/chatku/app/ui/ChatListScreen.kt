@@ -69,6 +69,8 @@ fun ChatListScreen(
     onProfile: () -> Unit,
     onChannels: () -> Unit,
     onStatuses: () -> Unit,
+    onPublicGroups: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val repo = ServiceLocator.repo
     val chats by repo.chats.collectAsState()
@@ -123,6 +125,8 @@ fun ChatListScreen(
                                 DropdownMenuItem(text = { Text("Grup baru") }, onClick = { menu = false; onNewGroup() })
                                 DropdownMenuItem(text = { Text("Channels") }, onClick = { menu = false; onChannels() })
                                 DropdownMenuItem(text = { Text("Status") }, onClick = { menu = false; onStatuses() })
+                                DropdownMenuItem(text = { Text("Temukan grup & komunitas") }, onClick = { menu = false; onPublicGroups() })
+                                DropdownMenuItem(text = { Text("Pengaturan tampilan") }, onClick = { menu = false; onSettings() })
                                 DropdownMenuItem(
                                     text = { Text("Profil (${me?.displayName.orEmpty()})") },
                                     onClick = { menu = false; onProfile() },

@@ -3,6 +3,7 @@
 package com.chatku.app.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -50,6 +51,8 @@ fun NewGroupScreen(onBack: () -> Unit, onCreated: (String) -> Unit) {
     var q by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<User>>(emptyList()) }
     var creating by remember { mutableStateOf(false) }
+    var isPublic by remember { mutableStateOf(false) }
+    var handle by remember { mutableStateOf("") }
 
     LaunchedEffect(q) {
         val s = q.trim()
@@ -73,11 +76,11 @@ fun NewGroupScreen(onBack: () -> Unit, onCreated: (String) -> Unit) {
         },
         bottomBar = {
             Button(
-                enabled = !creating && name.isNotBlank() && selected.isNotEmpty(),
+                enabled = !creating && name.isNotBlank() && (isPublic || selected.isNotEmpty()),
                 onClick = {
                     scope.launch {
                         creating = true
-                        repo.createGroup(name.trim(), desc.trim().ifBlank { null }, selected.keys.toList())
+                        repo.createGroup(name.trim(), desc.trim().ifBlank { null }, selected.keys.toList(), isPublic, handle.trim().lowercase())
                             .onSuccess { onCreated(it.id) }
                             .onFailure { snack.showSnackbar(it.message ?: "Gagal membuat grup") }
                         creating = false
@@ -96,6 +99,17 @@ fun NewGroupScreen(onBack: () -> Unit, onCreated: (String) -> Unit) {
                 value = desc, onValueChange = { desc = it.take(500) }, label = { Text("Deskripsi (opsional)") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
             )
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Publikasikan di direktori grup")
+                Switch(checked = isPublic, onCheckedChange = { isPublic = it })
+            }
+            if (isPublic) {
+                OutlinedTextField(
+                    value = handle, onValueChange = { handle = it.filter { c -> c.isLowerCase() || c.isDigit() || c == '_' }.take(40) },
+                    singleLine = true, label = { Text("Handle publik (contoh: komunitas_kotlin)") },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
             OutlinedTextField(
                 value = q, onValueChange = { q = it }, singleLine = true, label = { Text("Cari anggota (min. 3 huruf)") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
